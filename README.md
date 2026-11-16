@@ -284,25 +284,44 @@ Os Image IDs são **idênticos**, comprovando que a promoção utiliza o mesmo a
 
 ### Experimento 4 — Falha controlada e rollback em Produção
 
-**Resultado:** ⏳ Não executado.
+**Resultado:** ✅ Rollback executado com sucesso.
 
-Para executar: GitHub Actions → "Promover para Producao" → Run workflow → marcar `falha_controlada = true`.
+O experimento foi executado localmente utilizando o script `deploy.sh`:
 
-- Link da execução com falha controlada: —
-- Log do rollback: —
-- Resposta HTTP após a recuperação: —
+1. Deploy saudável em produção para criar a versão anterior.
+2. Novo deploy com `FAIL_HEALTH=true` — o health check retornou HTTP 503 em todas as 20 tentativas.
+3. O script removeu o container com falha, restaurou o container anterior e revalidou com smoke test.
 
-O script de implantação valida a saúde da nova versão. Caso a validação falhe (usando `falha_controlada=true` no pipeline), remove a versão candidata e restaura o container anterior. A execução permanece marcada como falha mesmo quando o rollback recupera o serviço.
+**Log do rollback:**
+
+```
+curl: (22) The requested URL returned error: 503   (×20 tentativas)
+
+ROLLBACK OK: container anterior restaurado.
+```
+
+**Resposta HTTP após a recuperação:**
+
+```json
+{"status":"ok","versao":"1.0.99","commit":"5b9698eafbd52401ae09f91c5d75a49defef2830"}
+```
+
+O script retornou `exit 1` mesmo após o rollback restaurar o serviço, garantindo que a execução seria marcada como falha no pipeline.
 
 ### Experimento 5 — Feature Flag (Extensão C)
 
-**Resultado:** ⏳ Não executado.
+**Resultado:** ✅ Feature flag funcionando corretamente.
 
-Para executar: GitHub Actions → "Promover para Producao" → Run workflow → marcar `novidade = true`.
+A mesma imagem Docker foi utilizada nos dois testes, alterando apenas a variável de ambiente `FEATURE_NOVIDADE`:
 
-- Resposta HTTP com a funcionalidade desabilitada: `404`
-- Resposta HTTP com a funcionalidade habilitada: `200`
-- Image ID utilizado nos dois testes: —
+| Configuração | Endpoint `/api/novidade` | Resposta |
+|---|---|---|
+| `FEATURE_NOVIDADE=false` | HTTP `404` Not Found | — |
+| `FEATURE_NOVIDADE=true` | HTTP `200` OK | `{"mensagem":"Nova consulta de entregas liberada!"}` |
+
+- **Image ID utilizado nos dois testes:** `sha256:853c7de8d2e6244164fcc9b2819cce2c893767e6b3cbe2c9bf259003b7b8e88c`
+
+A funcionalidade foi habilitada e desabilitada **por configuração**, sem reconstruir a imagem Docker.
 
 O objetivo é demonstrar que a funcionalidade pode ser habilitada ou desabilitada por configuração, sem reconstruir a imagem Docker.
 
