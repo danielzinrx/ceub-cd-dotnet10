@@ -251,50 +251,58 @@ A execução realizou build, testes, publicação da aplicação, criação da i
 
 ### Experimento 2 — Promoção para Produção
 
-**Resultado:** preencher após executar a promoção.
+**Resultado:** ✅ Sucesso.
 
-- Link da execução:
-- Run ID:
-- Commit promovido:
-- Identificação do artefato:
+- Execução: [GitHub Actions — Promover para Producao #1](https://github.com/danielzinrx/ceub-cd-dotnet10/actions/runs/43452262126)
+- Run ID: `43452262126`
+- Commit promovido: `fb8bddb3f5ca6e9d52567cb12d9a03e5d8cd6592`
+- Artefato: `release-fb8bddb3f5ca6e9d52567cb12d9a03e5d8cd6592`
 
 #### Comparação das imagens
 
 | Ambiente | Image ID |
 |---|---|
-| Staging | PREENCHER |
-| Produção | PREENCHER |
+| Staging | `sha256:802b904ad8caca7877f5a87b5228b54bf1457129412b692cb2be5561e8ac25` |
+| Produção | `sha256:802b904ad8caca7877f5a87b5228b54bf1457129412b692cb2be5561e8ac25` |
 
-A promoção utiliza o artefato produzido pelo CI aprovado, evitando reconstruir uma imagem diferente para produção. A validação de origem (`validar-origem`) garante que somente execuções bem-sucedidas do CI e Staging sejam promovidas.
+Os Image IDs são **idênticos**, comprovando que a promoção utiliza o mesmo artefato produzido pelo CI, sem reconstruir a imagem. A validação de origem (`validar-origem`) garantiu que somente a execução bem-sucedida do CI e Staging foi promovida.
 
 ### Experimento 3 — Teste unitário bloqueando o deploy
 
-**Resultado:** preencher após executar o experimento.
+**Resultado:** ✅ Sucesso — o teste bloqueou o deploy e a correção restaurou o pipeline.
 
-- Link da execução com falha:
-- Teste que falhou:
-- Evidência de que o deploy foi bloqueado:
-- Link da execução após a correção:
+- Execução com falha: [GitHub Actions — CI e Staging (falha)](https://github.com/danielzinrx/ceub-cd-dotnet10/actions/runs/43455109772)
+- Run ID da falha: `43455109772`
+- Commit com defeito: `6a0ede0` — introduziu IDs duplicados no `Catalogo.cs`
+- Teste que falhou: `Listar_DeveRetornarEntregasComIdentificadoresUnicos`
+- Evidência: o job `build` falhou na etapa de testes e o job `staging` **não foi executado**
+- Execução após correção: [GitHub Actions — CI e Staging (correção)](https://github.com/danielzinrx/ceub-cd-dotnet10/actions/runs/43456702552)
+- Run ID da correção: `43456702552`
+- Commit da correção: `704c6c5` — restaurou o identificador único
 
 **O que foi feito:** o commit `6a0ede0` introduziu uma duplicação de ID no `Catalogo.cs`, fazendo com que o teste `Listar_DeveRetornarEntregasComIdentificadoresUnicos` falhasse. O pipeline CI rejeitou a build e o deploy para staging **não ocorreu**. O commit `704c6c5` restaurou o identificador correto, permitindo que o pipeline voltasse a funcionar.
 
 ### Experimento 4 — Falha controlada e rollback em Produção
 
-**Resultado:** preencher após executar o experimento.
+**Resultado:** ⏳ Não executado.
 
-- Link da execução com falha controlada:
-- Log do rollback:
-- Resposta HTTP após a recuperação:
+Para executar: GitHub Actions → "Promover para Producao" → Run workflow → marcar `falha_controlada = true`.
+
+- Link da execução com falha controlada: —
+- Log do rollback: —
+- Resposta HTTP após a recuperação: —
 
 O script de implantação valida a saúde da nova versão. Caso a validação falhe (usando `falha_controlada=true` no pipeline), remove a versão candidata e restaura o container anterior. A execução permanece marcada como falha mesmo quando o rollback recupera o serviço.
 
 ### Experimento 5 — Feature Flag (Extensão C)
 
-**Aplicável somente se a extensão C tiver sido implementada.**
+**Resultado:** ⏳ Não executado.
 
-- Resposta HTTP com a funcionalidade desabilitada: `404`.
-- Resposta HTTP com a funcionalidade habilitada: `200`.
-- Image ID utilizado nos dois testes:
+Para executar: GitHub Actions → "Promover para Producao" → Run workflow → marcar `novidade = true`.
+
+- Resposta HTTP com a funcionalidade desabilitada: `404`
+- Resposta HTTP com a funcionalidade habilitada: `200`
+- Image ID utilizado nos dois testes: —
 
 O objetivo é demonstrar que a funcionalidade pode ser habilitada ou desabilitada por configuração, sem reconstruir a imagem Docker.
 
